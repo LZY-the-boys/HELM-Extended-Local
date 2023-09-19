@@ -8,7 +8,7 @@ from collections import Counter
 import dataclasses
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
-
+import re
 from tqdm import tqdm
 
 from helm.common.general import ensure_directory_exists, write, asdict_without_nones
@@ -37,8 +37,8 @@ class RunnerError(Exception):
 
     pass
 
-
-@dataclass(frozen=True)
+# hack for change the name
+@dataclass(frozen=False)
 class RunSpec:
     """
     Specifies how to do a single run, which gets a scenario, adapts it, and
@@ -168,18 +168,25 @@ class Runner:
         failed_run_specs: List[RunSpec] = []
 
         for run_spec in tqdm(run_specs, disable=None):
-            try:
-                with htrack_block(f"Running {run_spec.name}"):
-                    self.run_one(run_spec)
-            except Exception as e:
-                if self.exit_on_error:
-                    raise e
-                else:
-                    hlog(f"Error when running {run_spec.name}:\n{traceback.format_exc()}")
-                    failed_run_specs.append(run_spec)
-        if not self.exit_on_error and failed_run_specs:
-            failed_runs_str = ", ".join([f'"{run_spec.name}"' for run_spec in failed_run_specs])
-            raise RunnerError(f"Failed runs: [{failed_runs_str}]")
+
+            # support for customize name for the same model'
+            if not os.environ.get('name', False):
+                raise Exception('--name')
+            
+            run_spec.name = re.sub(r'(?<=[:,]model=)([^,]+)',os.environ.get('name'),run_spec.name)
+            self.run_one(run_spec)
+            # try:
+            #     with htrack_block(f"Running {run_spec.name}"):
+            #         self.run_one(run_spec)
+            # except Exception as e:
+            #     if self.exit_on_error:
+            #         raise e
+            #     else:
+            #         hlog(f"Error when running {run_spec.name}:\n{traceback.format_exc()}")
+            #         failed_run_specs.append(run_spec)
+        # if not self.exit_on_error and failed_run_specs:
+        #     failed_runs_str = ", ".join([f'"{run_spec.name}"' for run_spec in failed_run_specs])
+        #     raise RunnerError(f"Failed runs: [{failed_runs_str}]")
 
     def run_one(self, run_spec: RunSpec):
         # Load the scenario

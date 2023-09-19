@@ -14,6 +14,8 @@ from helm.common.tokenization_request import (
     DecodeRequestResult,
     TokenizationToken,
 )
+import os
+from typing import Optional, Union
 from .client import Client, wrap_request_time, truncate_sequence, cleanup_tokens
 from .huggingface_tokenizer import HuggingFaceTokenizers
 from helm.proxy.clients.huggingface_model_registry import (
@@ -22,17 +24,30 @@ from helm.proxy.clients.huggingface_model_registry import (
     HuggingFaceHubModelConfig,
     HuggingFaceLocalModelConfig,
 )
+from transformers import GPTQConfig,BitsAndBytesConfig,LlamaTokenizerFast,LlamaTokenizer
 from threading import Lock
-
-
+from accelerate import Accelerator, DistributedType
+from peft import PeftModelForCausalLM
 # Map of HELM model name to Hugging Face Hub model name where they differ.
 _KNOWN_MODEL_ALIASES: Dict[str, str] = {
     "huggingface/gpt2": "gpt2",
     "huggingface/starcoder": "bigcode/starcoder",
 }
 
+def _get_dtype(
+    dtype: Union[str, torch.dtype]
+) -> torch.dtype:
+    """Converts `dtype` from `str` to torch.dtype when possible. Does not use an instantiated HF AutoConfig"""
+    if isinstance(dtype, str) and dtype != "auto":
+        # Convert `str` args torch dtype: `float16` -> `torch.float16`
+        _torch_dtype = getattr(torch, dtype)
+    else:
+        _torch_dtype = dtype
+    return _torch_dtype
+
 
 class HuggingFaceServer:
+
     def __init__(self, model_config: HuggingFaceModelConfig):
         if torch.cuda.is_available():
             hlog("CUDA is available, initializing with a GPU...")
@@ -50,13 +65,84 @@ class HuggingFaceServer:
                 model_kwargs["revision"] = model_config.revision
         else:
             raise Exception(f"Unknown type of model_config: {model_config}")
+        # support for multi gpu.
+        gpus = torch.cuda.device_count()
+        accelerator = Accelerator()
+        model_kwargs = {}
+        self.rank = 0
+        self.world_size = 1
+        data_parallel = False
+        tensor_parallel = model_config.model_args.get('tensor_parallel',False)
+        quantization_config = model_config.model_args.get('quantization_config',None)
+        dtype = model_config.model_args.get('dtype', 'float16')
+        peft = model_config.model_args.get('peft', None)
+
+        if not (tensor_parallel or accelerator.num_processes > 1):
+            # single gpu
+            model_kwargs.update({'device_map': {'':0}})  
+        elif gpus > 1:
+            assert not (accelerator.num_processes > 1 and tensor_parallel), (
+                    "Attempted to use both a HF Accelerate `device_map` and to launch via `accelerate launch`. If this is the case, please either remove `parallelize=True` from --model_args or launch outside of the Accelerate launcher."
+                )
+            # multi gpu
+            if tensor_parallel:
+                # tensor parallel
+                model_kwargs.update({'device_map':'auto'})
+            else:
+                assert not gpus > accelerator.num_processes, (
+                    "set CUDA_VISIBLE_DEVICES"
+                )   
+                data_parallel = True
+                model_kwargs.update({'device_map': {'':accelerator.local_process_index}})
+
+        if quantization_config:
+            # NOTICE: model.config.quantization_config > input quantization_config
+            if quantization_config['quant_method'] == 'gptq':
+                quantization_config = GPTQConfig.from_dict(quantization_config)
+            elif quantization_config['quant_method'] == 'bitsandbytes':
+                quantization_config['bnb_4bit_compute_dtype'] = _get_dtype(dtype)
+                if self.rank == 0:
+                    print(f'>>> set bnb_4bit_compute_dtype to {_get_dtype(dtype)}')
+                quantization_config = BitsAndBytesConfig.from_dict(quantization_config)  
+            else:
+                raise Exception('wrong quantization_config')      
+            model_kwargs.update({'quantization_config': quantization_config})
+
         with htrack_block(f"Loading Hugging Face model for config {model_config}"):
             # WARNING this may fail if your GPU does not have enough memory
-            self.model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, **model_kwargs).to(
-                self.device
-            )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name, 
+                trust_remote_code=True, 
+                low_cpu_mem_usage=True,
+                **model_kwargs
+            ).eval()
         with htrack_block(f"Loading Hugging Face tokenizer model for config {model_config}"):
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name, **model_kwargs)
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_name, 
+                use_fast=True,
+                **model_kwargs
+            )
+
+        if peft:
+            self.model = PeftModelForCausalLM.from_pretrained(
+                self.model, peft
+            )
+        if self.rank == 0:
+            print(self.model)
+
+        if data_parallel:
+            assert accelerator.distributed_type in [
+                DistributedType.FSDP,
+                DistributedType.MULTI_GPU,
+            ], "Unsupported distributed type provided. Only DDP and FSDP are supported."
+            if accelerator.distributed_type == DistributedType.FSDP:
+                self.gpt2 = accelerator.prepare(self.gpt2)
+            else:
+                self.gpt2 = accelerator.prepare_model(self.gpt2, evaluation_mode=True)
+            self._device = torch.device(f"cuda:{accelerator.local_process_index}")
+            self.accelerator = accelerator
+            self.rank = self.accelerator.local_process_index
+            self.world_size = self.accelerator.num_processes
 
     def serve_request(self, raw_request: Dict[str, Any]):
         encoded_input = self.tokenizer(raw_request["prompt"], return_tensors="pt", return_token_type_ids=False).to(
@@ -69,9 +155,14 @@ class HuggingFaceServer:
         top_k_per_token: int = raw_request["top_k_per_token"]
         del raw_request["top_k_per_token"]
         if len(raw_request["stop_sequences"]) > 0:
+
             stop_sequence_ids = self.tokenizer(
                 raw_request["stop_sequences"], return_token_type_ids=False, add_special_tokens=False
             )
+            if isinstance(self.tokenizer,LlamaTokenizerFast) or isinstance(self.tokenizer, LlamaTokenizer):
+                # llama2 tokenize \n as [1, 29871, 13], 
+                # 29871 = ''
+                stop_sequence_ids.input_ids=[[13]]
             assert len(stop_sequence_ids.input_ids) == 1, "Total number of stop words should be 1."
             assert len(stop_sequence_ids.input_ids[0]) == 1, "Total number of tokens in each stop word should be 1."
             del raw_request["stop_sequences"]
@@ -196,16 +287,21 @@ class HuggingFaceClient(Client):
         # loading times).
         model_server_instance: HuggingFaceServer = self.get_model_server_instance(request.model)
 
-        try:
+        # try:
 
-            def do_it():
-                return model_server_instance.serve_request(raw_request)
+        def do_it():
+            return model_server_instance.serve_request(raw_request)
 
-            cache_key = Client.make_cache_key(raw_request, request)
+        cache_key = Client.make_cache_key(raw_request, request)
+        # 调用cache返回结果
+        if os.environ.get('use_cache', False):
             response, cached = self.cache.get(cache_key, wrap_request_time(do_it))
-        except Exception as e:  # Do something if error is encountered.
-            error: str = f"HuggingFace error: {e}"
-            return RequestResult(success=False, cached=False, error=error, completions=[], embedding=[])
+        else:
+            response = wrap_request_time(do_it)()
+            cached = False
+        # except Exception as e:  # Do something if error is encountered.
+        #     error: str = f"HuggingFace error: {e}"
+        #     return RequestResult(success=False, cached=False, error=error, completions=[], embedding=[])
 
         completions = []
         for raw_completion in response["completions"]:

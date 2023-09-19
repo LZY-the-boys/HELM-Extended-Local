@@ -54,7 +54,7 @@ class AutoClient(Client):
     def _build_cache_config(self, organization: str) -> CacheConfig:
         if self.mongo_uri:
             return MongoCacheConfig(self.mongo_uri, collection_name=organization)
-
+        
         client_cache_path: str = os.path.join(self.cache_path, f"{organization}.sqlite")
         # TODO: Allow setting CacheConfig.follower_cache_path from a command line flag.
         return SqliteCacheConfig(client_cache_path)

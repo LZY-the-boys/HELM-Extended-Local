@@ -70,6 +70,7 @@ class Executor:
             return scenario_state
 
         # Do it!
+        # lzyTODO: add multiple gpu
         request_states = parallel_map(
             self.process,
             scenario_state.request_states,
@@ -80,10 +81,10 @@ class Executor:
         return ScenarioState(scenario_state.adapter_spec, request_states)
 
     def process(self, state: RequestState) -> RequestState:
-        try:
-            result: RequestResult = self.service.make_request(self.execution_spec.auth, state.request)
-        except Exception as e:
-            raise ExecutorError(f"{str(e)} Request: {state.request}") from e
+        # try:
+        result: RequestResult = self.service.make_request(self.execution_spec.auth, state.request)
+        # except Exception as e:
+        #     raise ExecutorError(f"{str(e)} Request: {state.request}") from e
         if not result.success:
             if result.error_flags and not result.error_flags.is_fatal:
                 hlog(f"WARNING: Non-fatal error treated as empty completion: {result.error}")

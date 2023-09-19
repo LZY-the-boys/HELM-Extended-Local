@@ -375,6 +375,7 @@ class Cache(object):
                 cached = False
                 cache_stats.increment_compute(self.config.cache_stats_key)
                 # Compute and commit the request/response to SQLite
+                # NOTE model forward
                 response = compute()
 
                 write_to_key_value_store(key_value_store, request, response)

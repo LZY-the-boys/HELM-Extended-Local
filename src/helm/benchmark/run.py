@@ -262,9 +262,26 @@ def main():
         help="Experimental: Where to read model deployments from",
         default=[],
     )
+    parser.add_argument(
+        "--model-args",
+        type=str,
+        help="Experimental: Where to read model metadata from",
+        default=None,
+    )
+    parser.add_argument(
+        "--name",
+        type=str,
+        help="Experimental: Where to read model metadata from",
+        default=None,
+    )
     add_run_args(parser)
     args = parser.parse_args()
     validate_args(args)
+
+    # hack for parameter
+    import os;
+    os.environ['model_args']=args.model_args
+    os.environ['name']=args.name
 
     for huggingface_model_name in args.enable_huggingface_models:
         register_huggingface_hub_model_config(huggingface_model_name)
@@ -333,4 +350,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except:
+        import sys,pdb,bdb
+        type, value, tb = sys.exc_info()
+        if type == bdb.BdbQuit:
+            exit()
+        print(type,value)
+        pdb.post_mortem(tb)
+    

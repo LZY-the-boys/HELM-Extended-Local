@@ -11,6 +11,7 @@ from helm.proxy.models import (
     FULL_FUNCTIONALITY_TEXT_MODEL_TAG,
     LOCAL_HUGGINGFACE_MODEL_TAG,
 )
+import json
 
 # The path where local HuggingFace models should be downloaded or symlinked, e.g. ./huggingface_models/llama-7b
 LOCAL_HUGGINGFACE_MODEL_DIR = "huggingface_models"
@@ -32,6 +33,7 @@ class HuggingFaceHubModelConfig:
     """Revision of the model to use e.g. 'main'.
 
     If None, use the default revision."""
+    model_args: dict
 
     @property
     def model_id(self) -> str:
@@ -72,10 +74,12 @@ class HuggingFaceHubModelConfig:
             raise ValueError(f"Could not parse model name: '{raw}'; Expected format: [namespace/]model_name[@revision]")
         model_name = match.group("model_name")
         assert model_name
+        if os.environ.get('model_args', False):
+            model_args = json.loads(os.environ.get('model_args'))
         return HuggingFaceHubModelConfig(
-            namespace=match.group("namespace"), model_name=model_name, revision=match.group("revision")
+            namespace=match.group("namespace"), model_name=model_name, revision=match.group("revision"),
+            model_args=model_args
         )
-
 
 @dataclass(frozen=True)
 class HuggingFaceLocalModelConfig:
@@ -87,6 +91,7 @@ class HuggingFaceLocalModelConfig:
     For pre-registered local models that are already in _huggingface_model_registry below,
     this will get set to LOCAL_HUGGINGFACE_MODEL_DIR by default.
     Otherwise, this is specified using the flag --enable-local-huggingface-models <path>."""
+    model_args: dict
 
     @property
     def model_id(self) -> str:
@@ -108,8 +113,14 @@ class HuggingFaceLocalModelConfig:
     def from_path(path: str) -> "HuggingFaceLocalModelConfig":
         """Generates a HuggingFaceHubModelConfig from a (relative or absolute) path to a local HuggingFace model."""
         model_name = os.path.split(path)[-1]
-        return HuggingFaceLocalModelConfig(model_name=model_name, path=path)
-
+        model_args = None
+        if os.environ.get('model_args', False):
+            model_args = json.loads(os.environ.get('model_args'))
+        return HuggingFaceLocalModelConfig(
+            model_name=model_name, 
+            path=path,
+            model_args=model_args,
+        )
 
 HuggingFaceModelConfig = Union[HuggingFaceHubModelConfig, HuggingFaceLocalModelConfig]
 

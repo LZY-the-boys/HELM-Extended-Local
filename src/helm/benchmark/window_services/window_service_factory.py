@@ -89,6 +89,7 @@ class WindowServiceFactory:
             window_service = get_remote_window_service(service, model_name)
         elif organization == "neurips":
             window_service = HTTPModelWindowServce(service)
+        # here is for the local path
         elif huggingface_model_config:
             window_service = HuggingFaceWindowService(service=service, model_config=huggingface_model_config)
         elif organization == "openai":
