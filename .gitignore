@@ -45,3 +45,4 @@ notes.otl
 .nfs*
 outs
 benchmark_output
+.git_old
