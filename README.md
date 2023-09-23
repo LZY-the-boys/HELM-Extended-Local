@@ -64,6 +64,15 @@ python -m helm.benchmark.presentation.summarize --suite v1
 python -m helm.benchmark.server
 ```
 
+MMLU result (max-eval-instances=1000, 57 test sets)
+
+| Model/adapter                       |                 EM |        ECE (10-bin) |     EM (Robustness) |      EM (Fairness) |             # eval | # train | truncated |   # prompt tokens | # output tokens | # trials |
+|-------------------------------------|-------------------:|--------------------:|--------------------:|-------------------:|-------------------:|--------:|----------:|------------------:|----------------:|---------:|
+| huggingface/Llama-2-70B-hf-4bit     | 0.6860255837649295 | 0.38117816485499945 |  0.6456410872600922 | 0.6552815245194281 | 235.28070175438597 |     5.0 |           | 706.7065997805888 |             1.0 |      1.0 |
+| huggingface/Llama-2-70B-GPTQ        |  0.680822607304811 | 0.38476204408972614 |  0.6383747379915452 | 0.6442603542776053 | 235.28070175438597 |     5.0 |           | 706.7065997805888 |             1.0 |      1.0 |
+| huggingface/Llama-2-13b-hf          |  0.548905959955963 |  0.4969764635935246 |   0.502294480135353 | 0.5085932646205037 | 235.28070175438597 |     5.0 |           | 706.7065997805888 |             1.0 |      1.0 |
+| huggingface/Llama-2-13B-GPTQ        |  0.543006579002395 |  0.4701847938389892 | 0.49442028682068406 | 0.5045743983655909 | 235.28070175438597 |     5.0 |           | 706.7065997805888 |             1.0 |      1.0 |
+
 # Holistic Evaluation of Language Models
 
 Welcome! The **`crfm-helm`** Python package contains code used in the **Holistic Evaluation of Language Models** project ([paper](https://arxiv.org/abs/2211.09110), [website](https://crfm.stanford.edu/helm/latest/)) by [Stanford CRFM](https://crfm.stanford.edu/). This package includes the following features:
