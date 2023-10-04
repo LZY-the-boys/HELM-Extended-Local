@@ -58,7 +58,10 @@ class HTTPModelClient(Client):
         try:
 
             def do_it():
-                url = f"{self.base_url}/process"
+                url = f'{os.environ.get("url", self.base_url)}/process'
+                # url = "http://127.0.0.1:8080/process"
+                # url = f"{self.base_url}/process"
+                # there are bug with http://localhost:8080
                 response = requests.post(url, json=raw_request, timeout=self.timeout)
                 response.raise_for_status()
                 response_data = response.json()
@@ -98,7 +101,8 @@ class HTTPModelClient(Client):
         try:
 
             def do_it():
-                url = f"{self.base_url}/tokenize"
+                url = f'{os.environ.get("url", self.base_url)}/tokenize'
+                # url = f"{self.base_url}/tokenize"
                 response = requests.post(url, json=raw_request)
                 response.raise_for_status()
                 response_data = response.json()

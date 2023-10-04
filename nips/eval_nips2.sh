@@ -1,6 +1,5 @@
 set -e pipefail
 source activate crfm-helm
-cd helm
 # CUDA_VISIBLE_DEVICES=0 python -m helm.benchmark.run \
 #     --conf-paths run_specs.conf \
 #     --enable-local-huggingface-models /model/Llama-2-13B-GPTQ \
@@ -17,7 +16,7 @@ cd helm
 #     --model-args="{\"quantization_config\":{\"load_in_4bit\":true,\"bnb_4bit_use_double_quant\":true,\"bnb_4bit_quant_type\":\"nf4\",\"llm_int8_has_fp16_weight\":true,\"quant_method\":\"bitsandbytes\"},\"dtype\":\"float16\",\"name_ext\":\"Llama-2-13b-hf\"}" \
 #     --num-threads 1 
 
-for peft_name in sft_bnb-b2-a64-c1.0-lr4e-5-flashattn-samplepacking sft_bnb-b2-a64-c1.0-lr4e-5-v2_4090-flashattn-samplepacking ; do
+for peft_name in sft_bnb-b2-a64-c1.0-lr4e-5-v2_4090_noidentity_nospecial_mmlu_guanaco-flashattn-samplepacking ; do
     CUDA_VISIBLE_DEVICES=1 python -m helm.benchmark.run \
     --conf-paths run_test.conf \
     --enable-local-huggingface-models /model/Llama-2-13b-hf \
@@ -31,4 +30,3 @@ done
 python -m helm.benchmark.presentation.summarize --suite v2
 # Start a web server to display benchmark results
 python -m helm.benchmark.server -p 8001
-cd ..
