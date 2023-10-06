@@ -878,15 +878,17 @@ ALL_MODELS = [
 ]
 
 MODEL_NAME_TO_MODEL: Dict[str, Model] = {model.name: model for model in ALL_MODELS}
-
+import os
 
 def get_model(model_name: str) -> Model:
     """Get the `Model` given the name."""
-    if model_name not in MODEL_NAME_TO_MODEL:
+    if model_name not in MODEL_NAME_TO_MODEL and os.environ['name'] is None:
         raise ValueError(f"No model with name: {model_name}")
-
+    elif os.environ['name'] in model_name:
+        model_name = 'neurips/local'
+    else:
+        raise ValueError(f"No model with name: {model_name}")
     return MODEL_NAME_TO_MODEL[model_name]
-
 
 def get_model_group(model_name: str) -> str:
     """Get the model's group given the name."""
