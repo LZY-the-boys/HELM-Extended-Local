@@ -10,10 +10,10 @@ fi
 python -m helm.benchmark.run \
     --conf-paths run_http.conf \
     --suite $SUITE \
-    --max-eval-instances 1 \
+    --max-eval-instances 50 \
     --num-threads 1 \
     --url "http://127.0.0.1:$PORT"
 
 python -m helm.benchmark.presentation.summarize --suite $SUITE
 # Start a web server to display benchmark results
-python -m helm.benchmark.server -p $PORT
+python -m helm.benchmark.server -p 8002
