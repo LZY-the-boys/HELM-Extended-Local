@@ -1344,38 +1344,7 @@ def main():
         verbose=args.debug,
         num_threads=args.num_threads,
     )
-<<<<<<< HEAD:helm/benchmark/presentation/summarize.py
-    # benchmark_output/runs/nips/xx: run_spec.json stats.json
-    summarizer.read_runs()
-    summarizer.check_metrics_defined()
-    # => `xx/instances.json` `xx/display_predictions.json` `xx/display_requests.json`
-    summarizer.write_run_display_json(skip_completed=args.skip_completed_run_display_json)
-
-    # Must happen after summarizer.write_run_display_json()
-    # because it uses instances.json files
-    summarizer.read_scenario_spec_instance_ids(args.num_instances)
-
-    # Must happen after summarizer.read_scenario_spec_instance_ids()
-    # because it uses self.scenario_spec_instance_id_dict
-    summarizer.read_overlap_stats()
-
-    # => `summary.json`
-    summarizer.write_executive_summary()
-    # => `runs.json`
-    summarizer.write_runs()
-    # => `run_specs.json`
-    summarizer.write_run_specs()
-    # => `runs_to_run_suites.sjon`
-    summarizer.write_runs_to_run_suites()
-    # => `groups.json` `groups_metadata.json` `groups/json & latex`
-    summarizer.write_groups()
-    # => `costs.json`
-    summarizer.write_cost_report()
-    # =>  runs/latest -> runs/<name_of_suite>
-    summarizer.symlink_latest()
-=======
     summarizer.run_pipeline(skip_completed=args.skip_completed_run_display_json, num_instances=args.num_instances)
->>>>>>> 78d29f11ebf29cd7fe7ef97d18d10f225e6b9054:src/helm/benchmark/presentation/summarize.py
     hlog("Done.")
 
 

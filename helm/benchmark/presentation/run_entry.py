@@ -29,7 +29,6 @@ class RunEntries:
 def merge_run_entries(run_entries1: RunEntries, run_entries2: RunEntries):
     return RunEntries(run_entries1.entries + run_entries2.entries)
 
-
 def read_run_entries(paths: List[str]) -> RunEntries:
     """Read a HOCON file `path` and return the `RunEntry`s."""
     run_entries = RunEntries([])
@@ -45,5 +44,11 @@ def read_run_entries(paths: List[str]) -> RunEntries:
                 entry.description += ','
             entry.description += 'model=huggingface/' + json.loads(os.environ['model_args'])['name_ext']
         elif 'model=neurips/local' in entry.description:
-            entry.description = entry.description.replace('model=neurips/local', 'model=neurips/'+os.environ['name'])
+            if os.environ.get('model_args', False):
+                # run local
+                entry.description = entry.description.replace('model=neurips/local', 'model=huggingface/'+json.loads(os.environ['model_args'])['name_ext'])
+            else:
+                # run http
+                entry.description = entry.description.replace('model=neurips/local', 'model=neurips/'+os.environ['name'])
+
     return run_entries
