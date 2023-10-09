@@ -20,7 +20,7 @@ from .executor import ExecutionSpec
 from .runner import Runner, RunSpec, LATEST_SYMLINK
 from .slurm_runner import SlurmRunner
 from .run_specs import construct_run_specs
-
+import os
 
 def run_entries_to_run_specs(
     run_entries: List[RunEntry],
@@ -274,14 +274,24 @@ def main():
         help="Experimental: Where to read model metadata from",
         default=None,
     )
+    parser.add_argument(
+        "--url",
+        type=str,
+        help="Experimental: Where to read model metadata from",
+        default=None,
+    )
     add_run_args(parser)
     args = parser.parse_args()
     validate_args(args)
 
-    # hack for parameter
-    import os;
-    os.environ['model_args']=args.model_args
-    # os.environ['name']=args.name
+    # hack for parameter when loading local models
+    if args.enable_huggingface_models or args.enable_local_huggingface_models:
+        os.environ['model_args']=args.model_args
+    # hack for url when requesting with http
+    else:
+        # --server_url is not working
+        os.environ['url']=args.url
+    os.environ['name']= args.name
 
     # 这里enable_local_huggingface_models把model加到MODEL里边
     for huggingface_model_name in args.enable_huggingface_models:

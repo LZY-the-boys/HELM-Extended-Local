@@ -15,11 +15,6 @@ based on [this PR](https://github.com/stanford-crfm/helm/pull/1505) which add lo
 2. hack the [llama tokenization bug on `\n`](https://github.com/stanford-crfm/helm/issues/1782)
 3. fix name problems: set display model name as `model-args['name_ext']` 
 
-TODO:
-
-1. support for multi-gpu data parallel
-2. simplify the evaluation output
-
 
 ## Pre
 
