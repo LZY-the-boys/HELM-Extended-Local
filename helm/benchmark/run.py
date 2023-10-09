@@ -291,7 +291,7 @@ def main():
     else:
         # --server_url is not working
         os.environ['url']=args.url
-    # os.environ['name']=args.name
+    os.environ['name']= args.name
 
     # 这里enable_local_huggingface_models把model加到MODEL里边
     for huggingface_model_name in args.enable_huggingface_models:
