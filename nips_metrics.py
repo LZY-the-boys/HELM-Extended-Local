@@ -19,8 +19,12 @@ def main(args):
         pd.merge(x, y, on = 'Model/adapter',how='outer'), 
         [acc_data,robust_data, fair_data, bias_data],
     )
-    data['score'] = data.apply(lambda row: np.mean(data['acc-winrate']+data['robust-winrate']+data['fair-winrate']+data['bias-winrate']), axis=1)
-
+    try:
+        data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['robust-winrate']+row['fair-winrate']+row['bias-winrate']), axis=1)
+        data = data.sort_values(by='score', ascending=False)
+    except:
+        pass
+    data[data.select_dtypes(include='number').columns] *= 100
     data.to_csv(os.path.join(args.output_path, f'{args.suite}.csv'))
     data.to_excel(os.path.join(args.output_path, f'{args.suite}.xlsx'))
 
@@ -48,13 +52,15 @@ def calc_winrate(data):
 
 def calc_acc(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_accuracy.tex')
-    path2 = os.path.join(args.latex_dir,'targeted_evaluations_accuracy.tex')
-    data = pd.merge(
-        Table.read(path1).to_pandas(), 
-        Table.read(path2).to_pandas(), 
-        how='left',
-    )
-    data=data.drop(['Mean win rate'],axis=1)
+    try:
+        path2 = os.path.join(args.latex_dir,'targeted_evaluations_accuracy.tex')
+        data = pd.concat([Table.read(path1).to_pandas(), Table.read(path2).to_pandas()['BBQ - EM']], axis=1)
+    except:
+        data = Table.read(path1).to_pandas()
+    try:
+        data=data.drop(['Mean win rate'],axis=1)
+    except:
+        pass
     # winrate 需要重新计算
     data['acc-winrate']=calc_winrate(data)
     return data
@@ -62,36 +68,48 @@ def calc_acc(args):
 def calc_bias(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_bias.tex')
     data = Table.read(path1).to_pandas()
-    data['bias-winrate']=data['Mean win rate']
-    data=data.drop(['Mean win rate'],axis=1)
+    try:
+        data['Mean win rate'].fillna(0, inplace=True)
+        data['bias-winrate']=data['Mean win rate']
+        data=data.drop(['Mean win rate'],axis=1)
+    except:
+        pass
     return data
 
 def calc_fairness(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_fairness.tex')
     data = Table.read(path1).to_pandas()
-    data['fair-winrate']=data['Mean win rate']
-    data=data.drop(['Mean win rate'],axis=1)
+    try:
+        data['Mean win rate'].fillna(0, inplace=True)
+        data['fair-winrate']=data['Mean win rate']
+        data=data.drop(['Mean win rate'],axis=1)
+    except:
+        pass
     return data
 
 def calc_robustness(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_robustness.tex')
     data = Table.read(path1).to_pandas()
-    data['robust-winrate']=data['Mean win rate']
-    data=data.drop(['Mean win rate'],axis=1)
+    try:
+        data['Mean win rate'].fillna(0, inplace=True)
+        data['robust-winrate']=data['Mean win rate']
+        data=data.drop(['Mean win rate'],axis=1)
+    except:
+        pass
     return data
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--suite", type=str, help="the suite name", default="tmp"
-    )
-    parser.add_argument(
-        "--output-path", type=str, help="the output dir", default="/home/lzy/HELM-Extended-Local/"
-    )
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--suite", type=str, help="the suite name", default="tmp"
+        )
+        parser.add_argument(
+            "--output-path", type=str, help="the output dir", default="/home/lzy/HELM-Extended-Local/"
+        )
 
-    args = parser.parse_args()
-    args.latex_dir = os.path.join(
-        'benchmark_output/runs',
-        os.path.join(args.suite, 'groups/latex')
-    )
-    main(args)
+        args = parser.parse_args()
+        args.latex_dir = os.path.join(
+            'benchmark_output/runs',
+            os.path.join(args.suite, 'groups/latex')
+        )
+        main(args)

@@ -16,6 +16,7 @@ based on [this PR](https://github.com/stanford-crfm/helm/pull/1505) which add lo
 3. fix name problems: 
 - for local run: set `enable-local-huggingface-models`, display model name as `model-args['name_ext']` 
 - for http run: display model name as `--name` 
+4. automatically extract nips-contest metrics `python nips_metrics.py --suite $SUTIE`
 
 ## Pre
 
