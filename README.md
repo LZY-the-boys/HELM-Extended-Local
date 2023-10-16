@@ -11,12 +11,17 @@ Because as is in the [here](https://github.com/stanford-crfm/helm/issues/1794), 
 
 based on [this PR](https://github.com/stanford-crfm/helm/pull/1505) which add local huggingface model support, I further develop it to:
 
-1. add support for gptq, bitsandbytes, peft, tensorparallel
-2. hack the [llama tokenization bug on `\n`](https://github.com/stanford-crfm/helm/issues/1782)
-3. fix name problems: 
-- for local run: set `enable-local-huggingface-models`, display model name as `model-args['name_ext']` 
-- **for http run: display model name as `--name`**, so that you can compare against different models in one suite!
-4. automatically extract nips-contest metrics `python nips_metrics.py --suite $SUTIE`
+For local run:
+  1. add support for gptq, bitsandbytes, peft, tensorparallel in local run
+  2. hack the [llama tokenization bug on `\n`](https://github.com/stanford-crfm/helm/issues/1782)
+  3. you can customize model name by `model-args['name_ext']` 
+
+For http run:
+- **display model name as `--name`**, so that you can compare against different models in one suite!
+
+For showing result:
+- the above name problem.
+- automatically extract nips-contest metrics `python nips_metrics.py --suite $SUTIE --output-path $OUT`.
 
 ## Pre
 
@@ -24,6 +29,7 @@ based on [this PR](https://github.com/stanford-crfm/helm/pull/1505) which add lo
 conda create -n crfm-helm python=3.8
 conda activate crfm-helm
 pip install -r requirements.txt
+pip install summ-eval
 ```
 
 ## Usage
