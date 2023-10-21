@@ -99,17 +99,17 @@ def calc_robustness(args):
     return data
 
 if __name__ == "__main__":
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--suite", type=str, help="the suite name", default="tmp"
-        )
-        parser.add_argument(
-            "--output-path", type=str, help="the output dir", default="/home/lzy/HELM-Extended-Local/"
-        )
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--suite", type=str, help="the suite name", default="tmp"
+    )
+    parser.add_argument(
+        "--output-path", type=str, help="the output dir", default="/home/lzy/HELM-Extended-Local/"
+    )
 
-        args = parser.parse_args()
-        args.latex_dir = os.path.join(
-            'benchmark_output/runs',
-            os.path.join(args.suite, 'groups/latex')
-        )
-        main(args)
+    args = parser.parse_args()
+    args.latex_dir = os.path.join(
+        'benchmark_output/runs',
+        os.path.join(args.suite, 'groups/latex')
+    )
+    main(args)

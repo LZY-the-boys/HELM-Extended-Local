@@ -48,7 +48,9 @@ def read_run_entries(paths: List[str]) -> RunEntries:
                 # run local
                 entry.description = entry.description.replace('model=neurips/local', 'model=huggingface/'+json.loads(os.environ['model_args'])['name_ext'])
             else:
-                # run http
-                entry.description = entry.description.replace('model=neurips/local', 'model=neurips/'+os.environ['name'])
+                import re
+                name = os.environ['name'].split('/')[-1]
+                name = re.sub(r'threshold_(\d+\.\d+)_.+', r't\1', name)
+                entry.description = entry.description.replace('model=neurips/local', 'model=neurips/'+name)
 
     return run_entries
