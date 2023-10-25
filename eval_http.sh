@@ -1,30 +1,36 @@
 source activate crfm-helm
 set -e pipefail
-if [ ! "$PORT" ];then
-    PORT=8080
-fi
-if [ ! "$SUITE" ];then
-    SUITE=tmp
-fi
-if [ ! "$NAME" ];then
-    NAME=test
-fi
-if [ ! "$OUTPUT" ];then
-    OUTPUT=.
-fi
+
+: ${PORT:=8080}
+: ${SUITE:=tmp}
+: ${NAME:=test}
+: ${EVALNUM:=50}
+: ${OUTPUT:="/home/lzy/nips/submit/metrics"}
+
 if [[ "$CONF" =~ .*summary.* ]]; then
     CONF=run_summary.conf
+elif [[ "$CONF" =~ .*truthfulqabbq2.* ]]; then
+    CONF=run_truthfulqabbq2.conf
+elif [[ "$CONF" =~ .*mmlu2.* ]]; then
+    CONF=run_mmlu2.conf
 elif [[ "$CONF" =~ .*mmlu.* ]]; then
     CONF=run_mmlu.conf
 elif [[ "$CONF" =~ .*bbq.* ]]; then
     CONF=run_bbq.conf
 elif [[ "$CONF" =~ .*truthfulqa.* ]]; then
     CONF=run_truthfulqa.conf
+elif [[ "$CONF" =~ .*unseen.* ]]; then
+    CONF=run_unseen.conf
+elif [[ "$CONF" =~ .*math.* ]]; then
+    CONF=run_math.conf
+elif [[ "$CONF" =~ .*1st.* ]]; then
+    CONF=run_1st.conf
 else
     CONF=run_http.conf
 fi
 
 echo ">>> use $CONF"
+echo "OUTPUT $OUTPUT"
 
 function wait_port_available() {
     local port="$1"
@@ -44,10 +50,13 @@ wait_port_available $PORT
 python -m helm.benchmark.run \
     --conf-paths $CONF \
     --suite $SUITE \
-    --max-eval-instances 50 \
+    --max-eval-instances $EVALNUM \
     --num-threads 1 \
     --name $NAME \
     --url "http://127.0.0.1:$PORT"
 
-python -m helm.benchmark.presentation.summarize --suite $SUITE
-python nips_metrics.py --suite $SUITE --output-path $OUTPUT
+# write output to summary in the end
+if [ "$SHOW" ];then
+    python -m helm.benchmark.presentation.summarize --suite $SUITE
+    python nips_metrics.py --suite $SUITE --output-path $OUTPUT
+fi

@@ -14,10 +14,10 @@ def main(args):
     robust_data = calc_robustness(args)
     fair_data = calc_fairness(args)
     bias_data = calc_bias(args)
-    
+    reasoning_data = calc_reasoning(args)
     data = reduce(lambda x, y: 
         pd.merge(x, y, on = 'Model/adapter',how='outer'), 
-        [acc_data,robust_data, fair_data, bias_data],
+        [acc_data,robust_data, fair_data, bias_data, reasoning_data],
     )
     try:
         data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['robust-winrate']+row['fair-winrate']+row['bias-winrate']), axis=1)
@@ -25,12 +25,28 @@ def main(args):
     except:
         pass
     data[data.select_dtypes(include='number').columns] *= 100
+    column_first = 'Model/adapter'
+    column = data.pop(column_first)
+    data.insert(0, column.name, column)
     data.to_csv(os.path.join(args.output_path, f'{args.suite}.csv'))
     data.to_excel(os.path.join(args.output_path, f'{args.suite}.xlsx'))
 
     markdown_table = tabulate(data, headers='keys', tablefmt='pipe')
     print(markdown_table)
     print(markdown_table, file=open(os.path.join(args.output_path, f'{args.suite}.md'), 'w'))
+
+def calc_reasoning(args):
+    data = None
+    path = os.path.join(args.latex_dir, 'reasoning_accuracy.tex')
+    if os.path.exists(path):
+        data = Table.read(path).to_pandas()
+        try:
+            data['Mean win rate'].fillna(0, inplace=True)
+            data['reasoning-winrate']=data['Mean win rate']
+            data=data.drop(['Mean win rate'],axis=1)
+        except:
+            pass
+    return data
 
 def calc_winrate(data):
     # TODO: 相同的值会随机分配不同的winrate
@@ -52,11 +68,18 @@ def calc_winrate(data):
 
 def calc_acc(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_accuracy.tex')
-    try:
-        path2 = os.path.join(args.latex_dir,'targeted_evaluations_accuracy.tex')
-        data = pd.concat([Table.read(path1).to_pandas(), Table.read(path2).to_pandas()['BBQ - EM']], axis=1)
-    except:
-        data = Table.read(path1).to_pandas()
+    path2 = os.path.join(args.latex_dir,'targeted_evaluations_accuracy.tex')
+    # data = pd.concat([Table.read(path1).to_pandas(), Table.read(path2).to_pandas()['BBQ - EM']], axis=1)
+    # data = pd.merge(Table.read(path1).to_pandas(), Table.read(path2).to_pandas(),on = 'Model/adapter',how='left', suffixes=('', ''))
+    if os.path.exists(path1):
+        data1=Table.read(path1).to_pandas()
+        data2=Table.read(path2).to_pandas()
+        if len(data1.columns.union(data2.columns)) > len(data1.columns):
+            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+        else:
+            data = Table.read(path1).to_pandas()
+    else:
+        data = Table.read(path2).to_pandas()
     try:
         data=data.drop(['Mean win rate'],axis=1)
     except:
@@ -67,7 +90,17 @@ def calc_acc(args):
 
 def calc_bias(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_bias.tex')
-    data = Table.read(path1).to_pandas()
+    path2 = os.path.join(args.latex_dir,'targeted_evaluations_bias.tex')
+    if os.path.exists(path1):
+        data1=Table.read(path1).to_pandas()
+        data2=Table.read(path2).to_pandas()
+        if len(data1.columns.union(data2.columns)) > len(data1.columns):
+            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+            data['Mean win rate']=calc_winrate(data)
+        else:
+            data = Table.read(path1).to_pandas()
+    else:
+        data = Table.read(path2).to_pandas()
     try:
         data['Mean win rate'].fillna(0, inplace=True)
         data['bias-winrate']=data['Mean win rate']
@@ -78,7 +111,17 @@ def calc_bias(args):
 
 def calc_fairness(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_fairness.tex')
-    data = Table.read(path1).to_pandas()
+    path2 = os.path.join(args.latex_dir,'targeted_evaluations_fairness.tex')
+    if os.path.exists(path1):
+        data1=Table.read(path1).to_pandas()
+        data2=Table.read(path2).to_pandas()
+        if len(data1.columns.union(data2.columns)) > len(data1.columns):
+            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+            data['Mean win rate']=calc_winrate(data)
+        else:
+            data = Table.read(path1).to_pandas()
+    else:
+        data = Table.read(path2).to_pandas()
     try:
         data['Mean win rate'].fillna(0, inplace=True)
         data['fair-winrate']=data['Mean win rate']
@@ -89,7 +132,17 @@ def calc_fairness(args):
 
 def calc_robustness(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_robustness.tex')
-    data = Table.read(path1).to_pandas()
+    path2 = os.path.join(args.latex_dir,'targeted_evaluations_robustness.tex')
+    if os.path.exists(path1):
+        data1=Table.read(path1).to_pandas()
+        data2=Table.read(path2).to_pandas()
+        if len(data1.columns.union(data2.columns)) > len(data1.columns):
+            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+            data['Mean win rate']=calc_winrate(data)
+        else:
+            data = Table.read(path1).to_pandas()
+    else:
+        data = Table.read(path2).to_pandas()
     try:
         data['Mean win rate'].fillna(0, inplace=True)
         data['robust-winrate']=data['Mean win rate']
