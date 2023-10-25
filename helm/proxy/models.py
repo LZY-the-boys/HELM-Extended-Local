@@ -884,7 +884,7 @@ def get_model(model_name: str) -> Model:
     """Get the `Model` given the name."""
     if model_name not in MODEL_NAME_TO_MODEL and os.environ['name'] is None:
         raise ValueError(f"No model with name: {model_name}")
-    elif os.environ['name'] in model_name:
+    elif os.environ.get('name',False):
         model_name = 'neurips/local'
     else:
         raise ValueError(f"No model with name: {model_name}")
