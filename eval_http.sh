@@ -52,7 +52,7 @@ wait_port_available $PORT
 python -m helm.benchmark.run \
     --conf-paths $CONF \
     --suite $SUITE \
-    --max-eval-instances 50 \
+    --max-eval-instances $EVALNUM \
     --num-threads 1 \
     --name $NAME \
     --url "http://127.0.0.1:$PORT"

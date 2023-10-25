@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import Dict, List
 
 # Different modalities
 TEXT_MODEL_TAG: str = "text"
@@ -870,6 +870,16 @@ ALL_MODELS = [
         name="stabilityai/stablelm-base-alpha-7b",
         tags=[TEXT_MODEL_TAG, FULL_FUNCTIONALITY_TEXT_MODEL_TAG],
     ),
+    Model(
+        group="lightningai",
+        name="lightningai/lit-gpt",
+        tags=[
+            TEXT_MODEL_TAG,
+            INSTRUCTION_FOLLOWING_MODEL_TAG,
+            LIMITED_FUNCTIONALITY_TEXT_MODEL_TAG,
+            GPT2_TOKENIZER_TAG,
+        ],
+    ),
     # For debugging
     Model(
         group="simple",
@@ -886,8 +896,6 @@ def get_model(model_name: str) -> Model:
         raise ValueError(f"No model with name: {model_name}")
     elif os.environ.get('name',False):
         model_name = 'neurips/local'
-    else:
-        raise ValueError(f"No model with name: {model_name}")
     return MODEL_NAME_TO_MODEL[model_name]
 
 def get_model_group(model_name: str) -> str:

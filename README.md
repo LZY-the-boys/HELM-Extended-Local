@@ -13,13 +13,10 @@ based on [this PR](https://github.com/stanford-crfm/helm/pull/1505) which add lo
 
 1. add support for gptq, bitsandbytes, peft, tensorparallel
 2. hack the [llama tokenization bug on `\n`](https://github.com/stanford-crfm/helm/issues/1782)
-3. fix name problems: set display model name as `model-args['name_ext']` 
-
-TODO:
-
-1. support for multi-gpu data parallel
-2. simplify the evaluation output
-
+3. fix name problems: 
+- for local run: set `enable-local-huggingface-models`, display model name as `model-args['name_ext']` 
+- for http run: display model name as `--name` 
+4. automatically extract nips-contest metrics `python nips_metrics.py --suite $SUTIE`
 
 ## Pre
 

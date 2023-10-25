@@ -26,6 +26,9 @@ def main(args):
     except:
         pass
     data[data.select_dtypes(include='number').columns] *= 100
+    column_first = 'Model/adapter'
+    column = data.pop(column_first)
+    data.insert(0, column.name, column)
     data.to_csv(os.path.join(args.output_path, f'{args.suite}.csv'))
     data.to_excel(os.path.join(args.output_path, f'{args.suite}.xlsx'))
 
@@ -53,11 +56,18 @@ def calc_winrate(data):
 
 def calc_acc(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_accuracy.tex')
-    try:
-        path2 = os.path.join(args.latex_dir,'targeted_evaluations_accuracy.tex')
-        data = pd.concat([Table.read(path1).to_pandas(), Table.read(path2).to_pandas()['BBQ - EM']], axis=1)
-    except:
-        data = Table.read(path1).to_pandas()
+    path2 = os.path.join(args.latex_dir,'targeted_evaluations_accuracy.tex')
+    # data = pd.concat([Table.read(path1).to_pandas(), Table.read(path2).to_pandas()['BBQ - EM']], axis=1)
+    # data = pd.merge(Table.read(path1).to_pandas(), Table.read(path2).to_pandas(),on = 'Model/adapter',how='left', suffixes=('', ''))
+    if os.path.exists(path1):
+        data1=Table.read(path1).to_pandas()
+        data2=Table.read(path2).to_pandas()
+        if len(data1.columns.union(data2.columns)) > len(data1.columns):
+            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+        else:
+            data = Table.read(path1).to_pandas()
+    else:
+        data = Table.read(path2).to_pandas()
     try:
         data=data.drop(['Mean win rate'],axis=1)
     except:
@@ -68,7 +78,17 @@ def calc_acc(args):
 
 def calc_bias(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_bias.tex')
-    data = Table.read(path1).to_pandas()
+    path2 = os.path.join(args.latex_dir,'targeted_evaluations_bias.tex')
+    if os.path.exists(path1):
+        data1=Table.read(path1).to_pandas()
+        data2=Table.read(path2).to_pandas()
+        if len(data1.columns.union(data2.columns)) > len(data1.columns):
+            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+            data['Mean win rate']=calc_winrate(data)
+        else:
+            data = Table.read(path1).to_pandas()
+    else:
+        data = Table.read(path2).to_pandas()
     try:
         data['Mean win rate'].fillna(0, inplace=True)
         data['bias-winrate']=data['Mean win rate']
@@ -92,7 +112,17 @@ def calc_reasoning(args):
 
 def calc_fairness(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_fairness.tex')
-    data = Table.read(path1).to_pandas()
+    path2 = os.path.join(args.latex_dir,'targeted_evaluations_fairness.tex')
+    if os.path.exists(path1):
+        data1=Table.read(path1).to_pandas()
+        data2=Table.read(path2).to_pandas()
+        if len(data1.columns.union(data2.columns)) > len(data1.columns):
+            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+            data['Mean win rate']=calc_winrate(data)
+        else:
+            data = Table.read(path1).to_pandas()
+    else:
+        data = Table.read(path2).to_pandas()
     try:
         data['Mean win rate'].fillna(0, inplace=True)
         data['fair-winrate']=data['Mean win rate']
@@ -103,7 +133,17 @@ def calc_fairness(args):
 
 def calc_robustness(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_robustness.tex')
-    data = Table.read(path1).to_pandas()
+    path2 = os.path.join(args.latex_dir,'targeted_evaluations_robustness.tex')
+    if os.path.exists(path1):
+        data1=Table.read(path1).to_pandas()
+        data2=Table.read(path2).to_pandas()
+        if len(data1.columns.union(data2.columns)) > len(data1.columns):
+            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+            data['Mean win rate']=calc_winrate(data)
+        else:
+            data = Table.read(path1).to_pandas()
+    else:
+        data = Table.read(path2).to_pandas()
     try:
         data['Mean win rate'].fillna(0, inplace=True)
         data['robust-winrate']=data['Mean win rate']
