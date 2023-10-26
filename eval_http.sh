@@ -4,7 +4,7 @@ if [ ! "$PORT" ];then
     PORT=8080
 fi
 if [ ! "$SUITE" ];then
-    SUITE=exl23bit
+    SUITE=tmp
 fi
 if [ ! "$NAME" ];then
     NAME=test
@@ -15,10 +15,12 @@ elif [[ "$CONF" =~ .*mmlu2.* ]]; then
     CONF=run_mmlu2.conf
 elif [[ "$CONF" =~ .*mmlu.* ]]; then
     CONF=run_mmlu.conf
-elif [[ "$CONF" =~ .*bbq.* ]]; then
-    CONF=run_bbq.conf
 elif [[ "$CONF" =~ .*truthfulqabbq2.* ]]; then
     CONF=run_truthfulqabbq2.conf
+elif [[ "$CONF" =~ .*bigbench.* ]]; then
+    CONF=run_bigbench.conf
+elif [[ "$CONF" =~ .*bbq.* ]]; then
+    CONF=run_bbq.conf
 elif [[ "$CONF" =~ .*truthfulqa.* ]]; then
     CONF=run_truthfulqa.conf
 elif [[ "$CONF" =~ .*1st.* ]]; then
@@ -52,7 +54,7 @@ wait_port_available $PORT
 python -m helm.benchmark.run \
     --conf-paths $CONF \
     --suite $SUITE \
-    --max-eval-instances $EVALNUM \
+    --max-eval-instances 50 \
     --num-threads 1 \
     --name $NAME \
     --url "http://127.0.0.1:$PORT"

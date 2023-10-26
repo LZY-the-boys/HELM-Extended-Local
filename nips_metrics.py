@@ -15,16 +15,20 @@ def main(args):
     fair_data = calc_fairness(args)
     bias_data = calc_bias(args)
     reasoning_data = calc_reasoning(args)
-    data = reduce(lambda x, y: 
-        pd.merge(x, y, on = 'Model/adapter',how='outer'), 
-        [acc_data,robust_data, fair_data, bias_data, reasoning_data],
-    )
-    try:
-        # ignore reasoning in calc score and winrate
+    if reasoning_data is not None and 'unseen' in args.suite:
+        data = reduce(lambda x, y: 
+            pd.merge(x, y, on = 'Model/adapter',how='outer'), 
+            [acc_data, reasoning_data],
+        )
+        data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['reasoning-winrate']), axis=1)
+        data = data.sort_values(by='score', ascending=False)
+    else:
+        data = reduce(lambda x, y: 
+            pd.merge(x, y, on = 'Model/adapter',how='outer'), 
+            [acc_data,robust_data, fair_data, bias_data],
+        )        
         data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['robust-winrate']+row['fair-winrate']+row['bias-winrate']), axis=1)
         data = data.sort_values(by='score', ascending=False)
-    except:
-        pass
     data[data.select_dtypes(include='number').columns] *= 100
     column_first = 'Model/adapter'
     column = data.pop(column_first)
