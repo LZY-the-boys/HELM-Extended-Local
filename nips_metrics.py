@@ -15,15 +15,24 @@ def main(args):
     fair_data = calc_fairness(args)
     bias_data = calc_bias(args)
     reasoning_data = calc_reasoning(args)
-    data = reduce(lambda x, y: 
-        pd.merge(x, y, on = 'Model/adapter',how='outer'), 
-        [acc_data,robust_data, fair_data, bias_data, reasoning_data],
-    )
-    try:
-        data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['robust-winrate']+row['fair-winrate']+row['bias-winrate']), axis=1)
+    if reasoning_data is not None and 'unseen' in args.suite:
+        data = acc_data.combine_first(reasoning_data)
+        # data = reduce(lambda x, y: 
+        #     pd.merge(x, y, on = 'Model/adapter',how='outer'), 
+        #     [acc_data, reasoning_data],
+        # )
+        data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['reasoning-winrate']), axis=1)
         data = data.sort_values(by='score', ascending=False)
-    except:
-        pass
+    else:
+        data = reduce(lambda x, y: 
+            pd.merge(x, y, on = 'Model/adapter',how='outer'), 
+            [acc_data,robust_data, fair_data, bias_data],
+        )        
+        try:
+            data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['robust-winrate']+row['fair-winrate']+row['bias-winrate']), axis=1)
+            data = data.sort_values(by='score', ascending=False)
+        except:
+            pass
     data[data.select_dtypes(include='number').columns] *= 100
     column_first = 'Model/adapter'
     column = data.pop(column_first)
@@ -72,14 +81,17 @@ def calc_acc(args):
     # data = pd.concat([Table.read(path1).to_pandas(), Table.read(path2).to_pandas()['BBQ - EM']], axis=1)
     # data = pd.merge(Table.read(path1).to_pandas(), Table.read(path2).to_pandas(),on = 'Model/adapter',how='left', suffixes=('', ''))
     if os.path.exists(path1):
-        data1=Table.read(path1).to_pandas()
-        data2=Table.read(path2).to_pandas()
-        if len(data1.columns.union(data2.columns)) > len(data1.columns):
-            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+        data=Table.read(path1).to_pandas()
+        if os.path.exists(path2):
+            data2=Table.read(path2).to_pandas()
+            if len(data.columns.union(data2.columns)) > len(data.columns):
+                data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
         else:
             data = Table.read(path1).to_pandas()
-    else:
+    elif os.path.exists(path2):
         data = Table.read(path2).to_pandas()
+    else:
+        raise Exception('wrong path!')
     try:
         data=data.drop(['Mean win rate'],axis=1)
     except:
@@ -92,11 +104,12 @@ def calc_bias(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_bias.tex')
     path2 = os.path.join(args.latex_dir,'targeted_evaluations_bias.tex')
     if os.path.exists(path1):
-        data1=Table.read(path1).to_pandas()
-        data2=Table.read(path2).to_pandas()
-        if len(data1.columns.union(data2.columns)) > len(data1.columns):
-            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
-            data['Mean win rate']=calc_winrate(data)
+        data=Table.read(path1).to_pandas()
+        if os.path.exists(path2):
+            data2=Table.read(path2).to_pandas()
+            if len(data.columns.union(data2.columns)) > len(data.columns):
+                data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+                data['Mean win rate']=calc_winrate(data)
         else:
             data = Table.read(path1).to_pandas()
     else:
@@ -113,11 +126,12 @@ def calc_fairness(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_fairness.tex')
     path2 = os.path.join(args.latex_dir,'targeted_evaluations_fairness.tex')
     if os.path.exists(path1):
-        data1=Table.read(path1).to_pandas()
-        data2=Table.read(path2).to_pandas()
-        if len(data1.columns.union(data2.columns)) > len(data1.columns):
-            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
-            data['Mean win rate']=calc_winrate(data)
+        data=Table.read(path1).to_pandas()
+        if os.path.exists(path2):
+            data2=Table.read(path2).to_pandas()
+            if len(data.columns.union(data2.columns)) > len(data.columns):
+                data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+                data['Mean win rate']=calc_winrate(data)
         else:
             data = Table.read(path1).to_pandas()
     else:
@@ -134,11 +148,12 @@ def calc_robustness(args):
     path1 = os.path.join(args.latex_dir,'core_scenarios_robustness.tex')
     path2 = os.path.join(args.latex_dir,'targeted_evaluations_robustness.tex')
     if os.path.exists(path1):
-        data1=Table.read(path1).to_pandas()
-        data2=Table.read(path2).to_pandas()
-        if len(data1.columns.union(data2.columns)) > len(data1.columns):
-            data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
-            data['Mean win rate']=calc_winrate(data)
+        data =Table.read(path1).to_pandas()
+        if os.path.exists(path2):
+            data2=Table.read(path2).to_pandas()
+            if len(data.columns.union(data2.columns)) > len(data.columns):
+                data = Table.read(path1).to_pandas().combine_first(Table.read(path2).to_pandas())
+                data['Mean win rate']=calc_winrate(data)
         else:
             data = Table.read(path1).to_pandas()
     else:

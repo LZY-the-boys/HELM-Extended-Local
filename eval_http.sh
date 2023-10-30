@@ -9,8 +9,14 @@ set -e pipefail
 
 if [[ "$CONF" =~ .*summary.* ]]; then
     CONF=run_summary.conf
+elif [[ "$CONF" =~ .*cnn.* ]]; then
+    CONF=run_1st_cnn.conf
+elif [[ "$CONF" =~ .*bigbench.* ]]; then
+    CONF=run_bigbench.conf
 elif [[ "$CONF" =~ .*truthfulqabbq2.* ]]; then
     CONF=run_truthfulqabbq2.conf
+elif [[ "$CONF" =~ .*mmlu3.* ]]; then
+    CONF=run_mmlu3.conf
 elif [[ "$CONF" =~ .*mmlu2.* ]]; then
     CONF=run_mmlu2.conf
 elif [[ "$CONF" =~ .*mmlu.* ]]; then

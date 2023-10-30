@@ -1,6 +1,0 @@
-tmux new -d -s eval1 'CUDA_VISIBLE_DEVICES=0 bash nips/eval_nips1.sh'
-tmux new -d -s eval2 'CUDA_VISIBLE_DEVICES=1 bash nips/eval_nips2.sh'
-tmux new -d -s eval3 'CUDA_VISIBLE_DEVICES=2 bash nips/eval_nips3.sh'
-tmux new -d -s eval4 'CUDA_VISIBLE_DEVICES=3 bash nips/eval_nips4.sh'
-tmux new -d -s eval5 'CUDA_VISIBLE_DEVICES=4 bash nips/eval_nips5.sh'
-tmux new -d -s eval6 'CUDA_VISIBLE_DEVICES=5 bash nips/eval_nips6.sh'
