@@ -16,10 +16,11 @@ def main(args):
     bias_data = calc_bias(args)
     reasoning_data = calc_reasoning(args)
     if reasoning_data is not None and 'unseen' in args.suite:
-        data = reduce(lambda x, y: 
-            pd.merge(x, y, on = 'Model/adapter',how='outer'), 
-            [acc_data, reasoning_data],
-        )
+        data = acc_data.combine_first(reasoning_data)
+        # data = reduce(lambda x, y: 
+        #     pd.merge(x, y, on = 'Model/adapter',how='outer'), 
+        #     [acc_data, reasoning_data],
+        # )
         data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['reasoning-winrate']), axis=1)
         data = data.sort_values(by='score', ascending=False)
     else:
@@ -27,18 +28,23 @@ def main(args):
             pd.merge(x, y, on = 'Model/adapter',how='outer'), 
             [acc_data,robust_data, fair_data, bias_data],
         )        
-        data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['robust-winrate']+row['fair-winrate']+row['bias-winrate']), axis=1)
-        data = data.sort_values(by='score', ascending=False)
+        try:
+            data['score'] = data.apply(lambda row: np.mean(row['acc-winrate']+row['robust-winrate']+row['fair-winrate']+row['bias-winrate']), axis=1)
+            data = data.sort_values(by='score', ascending=False)
+        except:
+            pass
     data[data.select_dtypes(include='number').columns] *= 100
     column_first = 'Model/adapter'
     column = data.pop(column_first)
     data.insert(0, column.name, column)
     data.to_csv(os.path.join(args.output_path, f'{args.suite}.csv'))
     data.to_excel(os.path.join(args.output_path, f'{args.suite}.xlsx'))
-
-    markdown_table = tabulate(data, headers='keys', tablefmt='pipe')
-    print(markdown_table)
-    print(markdown_table, file=open(os.path.join(args.output_path, f'{args.suite}.md'), 'w'))
+    try:
+        markdown_table = tabulate(data, headers='keys', tablefmt='pipe')
+        print(markdown_table)
+        print(markdown_table, file=open(os.path.join(args.output_path, f'{args.suite}.md'), 'w'))
+    except:
+        pass
 
 def calc_winrate(data):
     # TODO: 相同的值会随机分配不同的winrate

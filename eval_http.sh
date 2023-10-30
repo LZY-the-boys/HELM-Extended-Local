@@ -11,6 +11,8 @@ if [ ! "$NAME" ];then
 fi
 if [[ "$CONF" =~ .*summary.* ]]; then
     CONF=run_summary.conf
+elif [[ "$CONF" =~ .*all.* ]]; then    
+    CONF=run_all.conf
 elif [[ "$CONF" =~ .*mmlu2.* ]]; then
     CONF=run_mmlu2.conf
 elif [[ "$CONF" =~ .*mmlu.* ]]; then
