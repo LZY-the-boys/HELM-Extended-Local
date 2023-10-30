@@ -39,23 +39,12 @@ def main(args):
     data.insert(0, column.name, column)
     data.to_csv(os.path.join(args.output_path, f'{args.suite}.csv'))
     data.to_excel(os.path.join(args.output_path, f'{args.suite}.xlsx'))
-
-    markdown_table = tabulate(data, headers='keys', tablefmt='pipe')
-    print(markdown_table)
-    print(markdown_table, file=open(os.path.join(args.output_path, f'{args.suite}.md'), 'w'))
-
-def calc_reasoning(args):
-    data = None
-    path = os.path.join(args.latex_dir, 'reasoning_accuracy.tex')
-    if os.path.exists(path):
-        data = Table.read(path).to_pandas()
-        try:
-            data['Mean win rate'].fillna(0, inplace=True)
-            data['reasoning-winrate']=data['Mean win rate']
-            data=data.drop(['Mean win rate'],axis=1)
-        except:
-            pass
-    return data
+    try:
+        markdown_table = tabulate(data, headers='keys', tablefmt='pipe')
+        print(markdown_table)
+        print(markdown_table, file=open(os.path.join(args.output_path, f'{args.suite}.md'), 'w'))
+    except:
+        pass
 
 def calc_winrate(data):
     # TODO: 相同的值会随机分配不同的winrate
@@ -120,6 +109,19 @@ def calc_bias(args):
         data=data.drop(['Mean win rate'],axis=1)
     except:
         pass
+    return data
+
+def calc_reasoning(args):
+    data = None
+    path = os.path.join(args.latex_dir, 'reasoning_accuracy.tex')
+    if os.path.exists(path):
+        data = Table.read(path).to_pandas()
+        try:
+            data['Mean win rate'].fillna(0, inplace=True)
+            data['reasoning-winrate']=data['Mean win rate']
+            data=data.drop(['Mean win rate'],axis=1)
+        except:
+            pass
     return data
 
 def calc_fairness(args):
