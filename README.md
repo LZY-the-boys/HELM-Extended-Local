@@ -24,6 +24,7 @@ based on [this PR](https://github.com/stanford-crfm/helm/pull/1505) which add lo
 conda create -n crfm-helm python=3.8
 conda activate crfm-helm
 pip install -r requirements.txt
+pip install summ-eval
 ```
 
 ## Usage

@@ -1,11 +1,14 @@
-source activate crfm-helm
+eval "$(conda shell.bash hook)"
+conda activate crfm-helm
 set -e pipefail
+
+cd $home/HELM-Extended-Local
 
 : ${PORT:=8080}
 : ${SUITE:=tmp}
 : ${NAME:=test}
 : ${EVALNUM:=50}
-: ${OUTPUT:="/home/lzy/nips/submit/metrics"}
+: ${OUTPUT:="$home/nips_submit/metrics"}
 
 if [[ "$CONF" =~ .*summary.* ]]; then
     CONF=run_summary.conf
@@ -45,18 +48,6 @@ fi
 
 echo ">>> use $CONF"
 echo "OUTPUT $OUTPUT"
-
-function wait_port_available() {
-    local port="$1"
-    while true; do
-        if nc -z localhost $port; then
-            echo "$port start"
-            break
-        fi
-        sleep 5
-    done
-    sleep 1
-}
 
 wait_port_available $PORT
 

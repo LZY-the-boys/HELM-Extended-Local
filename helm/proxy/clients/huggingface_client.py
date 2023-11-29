@@ -26,8 +26,6 @@ from helm.proxy.clients.huggingface_model_registry import (
 )
 from transformers import GPTQConfig,BitsAndBytesConfig,LlamaTokenizerFast,LlamaTokenizer
 from threading import Lock
-from accelerate import Accelerator, DistributedType
-from peft import PeftModelForCausalLM
 # Map of HELM model name to Hugging Face Hub model name where they differ.
 _KNOWN_MODEL_ALIASES: Dict[str, str] = {
     "huggingface/gpt2": "gpt2",
@@ -49,6 +47,8 @@ def _get_dtype(
 class HuggingFaceServer:
 
     def __init__(self, model_config: HuggingFaceModelConfig):
+        from accelerate import Accelerator, DistributedType
+        from peft import PeftModelForCausalLM
         if torch.cuda.is_available():
             hlog("CUDA is available, initializing with a GPU...")
             self.device: str = "cuda:0"
