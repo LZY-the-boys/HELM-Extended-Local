@@ -6,7 +6,7 @@ cd $home/HELM-Extended-Local
 
 : ${PORT:=8080}
 : ${SUITE:=tmp}
-: ${NAME:=test}
+: ${NAME:=moe}
 : ${EVALNUM:=50}
 : ${OUTPUT:="$home/nips_submit/metrics"}
 
@@ -42,6 +42,8 @@ elif [[ "$CONF" =~ .*math.* ]]; then
     CONF=run_math.conf
 elif [[ "$CONF" =~ .*1st.* ]]; then
     CONF=run_1st.conf
+elif [[ "$CONF" =~ .*moe.* ]]; then
+    CONF=run_moe.conf
 else
     CONF=run_http.conf
 fi
@@ -52,14 +54,19 @@ echo "OUTPUT $OUTPUT"
 wait_port_available $PORT
 
 # hack to 127.0.0.1:8080
+T=$(date +%s)
+
 python -m helm.benchmark.run \
     --conf-paths $CONF \
     --suite $SUITE \
-    --max-eval-instances $EVALNUM \
+    --max-eval-instances $EVALNUM  \
     --num-threads 1 \
     --name $NAME \
     --url "http://127.0.0.1:$PORT"
 
+T="$(($(date +%s)-T))"
+formatted_time=$(printf "time %02dd:%02dh:%02dmin:%02ds\n" "$((T/86400))" "$((T/3600%24))" "$((T/60%60))" "$((T%60))")
+echo "[$(date '+%Y-%m-%d %H:%M:%S')][tmux-$CUDA_VISIBLE_DEVICES] $1 : [$formatted_time]"  >> $LZY_HOME/time.txt
 # write output to summary in the end
 if [ "$SHOW" ];then
     python -m helm.benchmark.presentation.summarize --suite $SUITE
