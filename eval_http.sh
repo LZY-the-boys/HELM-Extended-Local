@@ -2,13 +2,13 @@ eval "$(conda shell.bash hook)"
 conda activate crfm-helm
 set -e pipefail
 
-cd $home/HELM-Extended-Local
+cd $LZY_HOME/HELM-Extended-Local
 
 : ${PORT:=8080}
 : ${SUITE:=tmp}
 : ${NAME:=moe}
 : ${EVALNUM:=50}
-: ${OUTPUT:="$home/nips_submit/metrics"}
+: ${OUTPUT:="$LZY_HOME/nips_submit/metrics"}
 
 if [[ "$CONF" =~ .*summary.* ]]; then
     CONF=run_summary.conf
