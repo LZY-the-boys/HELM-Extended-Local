@@ -7,7 +7,6 @@ cd $LZY_HOME/HELM-Extended-Local
 : ${PORT:=8080}
 : ${SUITE:=tmp}
 : ${NAME:=moe}
-: ${EVALNUM:=50}
 : ${OUTPUT:="$LZY_HOME/nips_submit/metrics"}
 
 if [[ "$CONF" =~ .*summary.* ]]; then
@@ -42,6 +41,10 @@ elif [[ "$CONF" =~ .*math.* ]]; then
     CONF=run_math.conf
 elif [[ "$CONF" =~ .*1st.* ]]; then
     CONF=run_1st.conf
+elif [[ "$CONF" =~ .*moe2.* ]]; then
+    CONF=run_moe2.conf
+elif [[ "$CONF" =~ .*moe3.* ]]; then
+    CONF=run_moe3.conf
 elif [[ "$CONF" =~ .*moe.* ]]; then
     CONF=run_moe.conf
 else
@@ -59,7 +62,7 @@ T=$(date +%s)
 python -m helm.benchmark.run \
     --conf-paths $CONF \
     --suite $SUITE \
-    --max-eval-instances $EVALNUM  \
+    --max-eval-instances 499 \
     --num-threads 1 \
     --name $NAME \
     --url "http://127.0.0.1:$PORT"

@@ -36,6 +36,7 @@ def main(args):
     data[data.select_dtypes(include='number').columns] *= 100
     column_first = 'Model/adapter'
     column = data.pop(column_first)
+    os.makedirs(args.output_path, exist_ok=True)
     data.insert(0, column.name, column)
     data.to_csv(os.path.join(args.output_path, f'{args.suite}.csv'))
     data.to_excel(os.path.join(args.output_path, f'{args.suite}.xlsx'))

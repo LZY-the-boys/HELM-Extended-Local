@@ -74,7 +74,7 @@ def table_to_latex(table: Table, table_name: str, skip_blank_columns=True) -> st
     lines.append(" & ".join(str(table.header[i].value) for i in columns_shown) + " \\\\")
     lines.append("\\midrule")
     for row in table.rows:
-        lines.append(" & ".join(str(row[i].display_value or row[i].value or "") for i in columns_shown) + " \\\\")
+        lines.append(" & ".join(str(row[i].display_value or row[i].value) for i in columns_shown) + " \\\\")
     lines.append("\\bottomrule")
     lines.append("\\end{tabular}}")
     lines.append("\\caption{Results for " + table_name + "}")
